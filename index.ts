@@ -18,8 +18,8 @@ interface UserAnswers {
   [key: string]: string;
 }
 
-const conversationState = new Map<number, string>(); // Assuming `number` as user IDs
-const userAnswers = new Map<number, UserAnswers>();
+const conversationState = new Map<number, string>(); 
+const userAnswers: string[] = []
 
 const quizQuestions = [
   "Who is the king of Gondor?",
@@ -62,41 +62,26 @@ bot.on("message", async (msg) => {
     if (msg.text === "Yes") {
       conversationState.set(chatId, "awaitingAnswers");
       await bot.sendMessage(chatId, "Great!");
+      await bot.sendMessage(msg.chat.id, "Who is the king of Gondor?")
     }
   } else if (currentState === "awaitingAnswers") {
-    console.log(userAnswers);
-    let currentAnswers = userAnswers.get(chatId);
 
-    if (!currentAnswers) {
-      currentAnswers = {};
-      userAnswers.set(chatId, currentAnswers);
+    const currentAnswerIndex = userAnswers.length
+
+    if (userAnswers.length < quizQuestions.length) {
+      userAnswers.push(String(msg.text))
+      await bot.sendMessage(msg.chat.id, quizQuestions[currentAnswerIndex])
+    } else {
+      conversationState.set(msg.chat.id, "quizDone")
+      await bot.sendMessage(chatId, "You completed the quiz")
     }
 
-    const currentAnswersLength = Object.keys(currentAnswers).length;
-
-    if (currentAnswersLength < quizQuestions.length) {
-      await bot.sendMessage(chatId, quizQuestions[currentAnswersLength]);
-      currentAnswers[quizQuestions[currentAnswersLength]] = String(msg.text);
-    }
   }
 });
 
-// else if (currentState === "awaitingFirstAnswer") {
-//   if (msg.text === "Aragorn") {
-//     conversationState.set(chatId, "awaitingSecondAnswer");
-//     await bot.sendMessage(
-//       chatId,
-//       "How many people in the fellowship of the Ring?"
-//     );
-//   }
-// } else if (currentState === "awaitingSecondAnswer") {
-//   if (msg.text === "9") {
-//     conversationState.set(chatId, "awaitingThirdAnswer");
-//     await bot.sendMessage(chatId, "What is the Sauron's tower called?");
-//   }
-// } else if (currentState == "awaitingThirdAnswer") {
-//   if (msg.text === "Barad-dur") {
-//     conversationState.set(chatId, "quizDone");
-//     await bot.sendMessage(chatId, "Congratz! You won!");
-//   }
-// }
+setInterval(() => {
+  console.log("______________")
+  console.log(conversationState)
+  console.log(userAnswers)
+  console.log("______________")
+}, 1000)
