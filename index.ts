@@ -41,22 +41,23 @@ bot.onText(/\/start/, async (msg) => {
   });
 });
 
-const initiateQuiz = async (text: string, chatId: number) => {
-  const currentAnswerIndex = userAnswers.length;
-
-  if (userAnswers.length < quizQuestions.length) {
-    userAnswers.push(String(text));
-    await bot.sendMessage(chatId, quizQuestions[currentAnswerIndex]);
-  } else {
-    conversationState.set(chatId, "quizDone");
-    await bot.sendMessage(chatId, "You completed the quiz");
-  }
-};
-
 // Listen for replies to the initial question
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const currentState = conversationState.get(chatId);
+
+  const initiateQuiz = async () => {
+    console.log(currentState);
+    const currentAnswerIndex = userAnswers.length;
+
+    if (userAnswers.length < quizQuestions.length) {
+      userAnswers.push(String(msg.text));
+      await bot.sendMessage(chatId, quizQuestions[currentAnswerIndex]);
+    } else {
+      conversationState.set(chatId, "quizDone");
+      await bot.sendMessage(chatId, "You completed the quiz");
+    }
+  };
 
   if (currentState === "awaitingName") {
     // Process the user's name
@@ -74,10 +75,8 @@ bot.on("message", async (msg) => {
     if (msg.text === "Yes") {
       conversationState.set(chatId, "awaitingAnswers");
       await bot.sendMessage(chatId, "Great!");
-      await bot.sendMessage(msg.chat.id, "Who is the king of Gondor?");
+      await initiateQuiz();
     }
-  } else if (currentState === "awaitingAnswers") {
-    initiateQuiz(String(msg.text), chatId);
   }
 });
 
