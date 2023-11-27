@@ -46,19 +46,6 @@ bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const currentState = conversationState.get(chatId);
 
-  const initiateQuiz = async () => {
-    console.log(currentState);
-    const currentAnswerIndex = userAnswers.length;
-
-    if (userAnswers.length < quizQuestions.length) {
-      userAnswers.push(String(msg.text));
-      await bot.sendMessage(chatId, quizQuestions[currentAnswerIndex]);
-    } else {
-      conversationState.set(chatId, "quizDone");
-      await bot.sendMessage(chatId, "You completed the quiz");
-    }
-  };
-
   if (currentState === "awaitingName") {
     // Process the user's name
     await bot.sendMessage(chatId, `Welcome, ${msg.text}`);
@@ -75,10 +62,30 @@ bot.on("message", async (msg) => {
     if (msg.text === "Yes") {
       conversationState.set(chatId, "awaitingAnswers");
       await bot.sendMessage(chatId, "Great!");
-      await initiateQuiz();
+
+      // Start the quiz by sending the first question
+      await sendNextQuestion(chatId);
     }
+  } else if (currentState === "awaitingAnswers") {
+    // Process the user's answer to the current question
+    userAnswers.push(String(msg.text));
+
+    // Send the next question or complete the quiz
+    await sendNextQuestion(chatId);
   }
 });
+
+// Function to send the next quiz question or complete the quiz
+async function sendNextQuestion(chatId: number) {
+  const currentAnswerIndex = userAnswers.length;
+
+  if (userAnswers.length < quizQuestions.length) {
+    await bot.sendMessage(chatId, quizQuestions[currentAnswerIndex]);
+  } else {
+    conversationState.set(chatId, "quizDone");
+    await bot.sendMessage(chatId, "You completed the quiz");
+  }
+}
 
 setInterval(() => {
   console.log("______________");
