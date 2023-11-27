@@ -18,8 +18,8 @@ interface UserAnswers {
   [key: string]: string;
 }
 
-const conversationState = new Map<number, string>(); 
-const userAnswers: string[] = []
+const conversationState = new Map<number, string>();
+const userAnswers: string[] = [];
 
 const quizQuestions = [
   "Who is the king of Gondor?",
@@ -40,6 +40,18 @@ bot.onText(/\/start/, async (msg) => {
     },
   });
 });
+
+const initiateQuiz = async (text: string, chatId: number) => {
+  const currentAnswerIndex = userAnswers.length;
+
+  if (userAnswers.length < quizQuestions.length) {
+    userAnswers.push(String(text));
+    await bot.sendMessage(chatId, quizQuestions[currentAnswerIndex]);
+  } else {
+    conversationState.set(chatId, "quizDone");
+    await bot.sendMessage(chatId, "You completed the quiz");
+  }
+};
 
 // Listen for replies to the initial question
 bot.on("message", async (msg) => {
@@ -62,26 +74,16 @@ bot.on("message", async (msg) => {
     if (msg.text === "Yes") {
       conversationState.set(chatId, "awaitingAnswers");
       await bot.sendMessage(chatId, "Great!");
-      await bot.sendMessage(msg.chat.id, "Who is the king of Gondor?")
+      await bot.sendMessage(msg.chat.id, "Who is the king of Gondor?");
     }
   } else if (currentState === "awaitingAnswers") {
-
-    const currentAnswerIndex = userAnswers.length
-
-    if (userAnswers.length < quizQuestions.length) {
-      userAnswers.push(String(msg.text))
-      await bot.sendMessage(msg.chat.id, quizQuestions[currentAnswerIndex])
-    } else {
-      conversationState.set(msg.chat.id, "quizDone")
-      await bot.sendMessage(chatId, "You completed the quiz")
-    }
-
+    initiateQuiz(String(msg.text), chatId);
   }
 });
 
 setInterval(() => {
-  console.log("______________")
-  console.log(conversationState)
-  console.log(userAnswers)
-  console.log("______________")
-}, 1000)
+  console.log("______________");
+  console.log(conversationState);
+  console.log(userAnswers);
+  console.log("______________");
+}, 1000);
